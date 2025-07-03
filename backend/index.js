@@ -17,11 +17,21 @@ const swaggerDefinition = {
   info: {
     title: 'API LND Bitkaba',
     version: '1.0.0',
-    description: 'Documentation des endpoints LND (Lightning Network Daemon)'
+    description: 'Documentation des endpoints pour interagir avec un noeud LND et une passerelle de paiement Fiat.'
   },
   servers: [
     { url: 'http://localhost:3000/api' }
-  ]
+  ],
+  tags: [
+    {
+      name: 'Lightning',
+      description: 'API pour interagir avec LND (Lightning Network Daemon)'
+    },
+    {
+      name: 'Fiat Gateway',
+      description: 'API pour la passerelle de paiement en monnaie fiduciaire'
+    }
+  ],
 };
 
 const options = {
@@ -48,6 +58,7 @@ app.listen(PORT, () => {
   console.log(chalk.blue('- POST   /api/holdinvoice    (Body: { "amount": 1000, "description": "Test", "timestamp": 1679043200 })'));
   console.log(chalk.blue('- POST   /api/settleholdinvoice (Body: { "id": "xxxxxxxx", "secret": "xxxxxxxx" })'));
   console.log(chalk.blue('- POST   /api/pay            (Body: { "request": "lnbc..." })'));
+  console.log(chalk.blue('- POST   /api/create-fiat-payment (Body: { "request": "lnbc..." })'));
   console.log(chalk.cyan('----------------------------------------------------\n'));
   console.log(chalk.magenta('Documentation Swagger : http://localhost:3000/docs\n'));
 });
