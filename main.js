@@ -16,7 +16,7 @@ app.listen(PORT, () => {
   console.log("- GET    /api/getinfo");
 
   console.log(
-    '- POST   /api/holdinvoice    (Body: { "amount": 1000, "description": "Test", "timestamp": 1679043200 })'
+    '- POST   /api/holdinvoice    (Body: { "amount": 1000, "description": "Test", "exipry": })'
   );
   console.log(
     '- POST   /api/settleholdinvoice (Body: { "id": "xxxxxxxx", "secret": "xxxxxxxx" })'
