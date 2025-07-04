@@ -7,6 +7,7 @@ app.use(express.json());
 app.use(cors());
 
 app.use("/api", require("./routes/lnd.route"));
+app.use("/api", require("./routes/client.lnd.route"));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
@@ -21,5 +22,11 @@ app.listen(PORT, () => {
   console.log(
     '- POST   /api/settleholdinvoice (Body: { "id": "xxxxxxxx", "secret": "xxxxxxxx" })'
   );
-  console.log('- POST   /api/pay            (Body: { "request": "lnbc..." })');
+  console.log("----------------------------------------------------");
+  console.log("Endpoints disponibles coté client :");
+  console.log(
+    '- POST   /api/client/pay            (Body: { "payment_request": "lnbc...", "amount": 1000 })'
+  );
+  console.log("- POST   /api/client/balance");
+  console.log("- GET    /api/client/getinfo");
 });
