@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+<<<<<<< Updated upstream
 const { getLnd } = require('../lnd');
 const axios = require('axios');
 const { decode } = require('light-bolt11-decoder');
@@ -25,6 +26,10 @@ const {
   getInvoice,
   decodePaymentRequest,
 } = require("ln-service");
+=======
+const axios = require("axios");
+const { decode } = require("light-bolt11-decoder");
+>>>>>>> Stashed changes
 
 /**
  * @swagger
@@ -314,7 +319,7 @@ router.post('/create-fiat-payment', async (req, res) => {
 
     const amountXOF = Math.ceil(amountSats * SAT_TO_XOF_RATE);
 
-    // 3. Préparer la requête pour l'API de Feedapay
+    // 2. Préparer la requête pour l'API de Feedapay
     const feedapayApiKey = process.env.FEEDAPAY_SECRET_KEY;
     if (!feedapayApiKey) {
         console.error('La variable FEEDAPAY_SECRET_KEY n\'est pas définie dans le fichier .env');
@@ -351,11 +356,23 @@ router.post('/create-fiat-payment', async (req, res) => {
 
     const FEDAPAY_API_BASE_URL = 'https://api.fedapay.com/v1';
 
+<<<<<<< Updated upstream
     // 4. Créer la transaction sur FedaPay
     const transactionResponse = await axios.post(`${FEDAPAY_API_BASE_URL}/transactions`, transactionPayload, { headers });
 
     // 5. Récupérer l'ID de la transaction créée
     const transactionId = transactionResponse.data?.['v1/transaction']?.id;
+=======
+    // 3. Créer la transaction sur FedaPay
+    const transactionResponse = await axios.post(
+      `${FEDAPAY_API_BASE_URL}/transactions`,
+      transactionPayload,
+      { headers }
+    );
+
+    // 4. Récupérer l'ID de la transaction créée
+    const transactionId = transactionResponse.data?.["v1/transaction"]?.id;
+>>>>>>> Stashed changes
     if (!transactionId) {
         console.error('La réponse de FedaPay ne contient pas d\'ID de transaction:', transactionResponse.data);
         return res.status(500).json({ error: 'Échec de la création de la transaction avec le fournisseur.' });
@@ -364,10 +381,21 @@ router.post('/create-fiat-payment', async (req, res) => {
     // Associer l'ID de transaction FedaPay à la facture Lightning pour le callback
     pendingFiatToLnPayments.set(transactionId, request);
 
+<<<<<<< Updated upstream
     // 6. Générer le token de paiement (et l'URL) pour cette transaction
     const tokenResponse = await axios.post(`${FEDAPAY_API_BASE_URL}/transactions/${transactionId}/token`, {}, { headers });
     
     // 7. Retourner l'URL de paiement au frontend
+=======
+    // 5. Générer le token de paiement (et l'URL) pour cette transaction
+    const tokenResponse = await axios.post(
+      `${FEDAPAY_API_BASE_URL}/transactions/${transactionId}/token`,
+      {},
+      { headers }
+    );
+
+    // 6. Retourner l'URL de paiement au frontend
+>>>>>>> Stashed changes
     // La propriété `url` provient de la réponse de génération de token de FedaPay.
     const paymentUrl = tokenResponse.data?.url;
 
@@ -438,6 +466,7 @@ router.post('/fedapay-callback', async (req, res) => {
     const lightningInvoice = pendingFiatToLnPayments.get(fedaTransactionId);
 
     if (lightningInvoice) {
+<<<<<<< Updated upstream
       console.log(`Paiement Fiat approuvé pour la transaction ${fedaTransactionId}. Tentative de règlement de la facture Lightning...`);
       try {
         await pay({ lnd: req.lnd, request: lightningInvoice });
@@ -447,6 +476,33 @@ router.post('/fedapay-callback', async (req, res) => {
         console.error(`Échec du paiement de la facture Lightning pour la transaction FedaPay ${fedaTransactionId}:`, paymentError);
         // Gérer l'échec (ex: notifier un administrateur)
       }
+=======
+      console.log(
+        `Paiement Fiat approuvé pour la transaction ${fedaTransactionId}. Tentative de règlement de la facture Lightning...`
+      );
+      // Utilise le client gRPC injecté pour payer la facture.
+      // C'est un appel asynchrone "fire-and-forget". Le webhook répondra 200 OK
+      // immédiatement, et le paiement s'exécutera en arrière-plan. Utilisation de sendPaymentV2.
+      // On utilise le bon client : 'router' au lieu de 'lightning'
+      const call = req.adminClients.router.sendPaymentV2({
+        payment_request: lightningInvoice,
+        timeout_seconds: 60, // Un timeout pour éviter que le paiement ne reste bloqué indéfiniment
+      });
+
+      call.on('data', (response) => {
+        if (response.status === 'SUCCEEDED') {
+          console.log(`Facture Lightning pour la transaction FedaPay ${fedaTransactionId} payée avec succès !`);
+          pendingFiatToLnPayments.delete(fedaTransactionId); // Nettoyer la map
+        } else if (response.status === 'FAILED') {
+          console.error(`Échec du paiement de la facture Lightning pour la transaction FedaPay ${fedaTransactionId}:`, response.failure_reason);
+          // On pourrait vouloir stocker cet échec dans la DB pour une nouvelle tentative.
+        }
+      });
+
+      call.on('error', (err) => {
+        console.error(`Erreur gRPC lors du paiement de la facture Lightning pour la transaction FedaPay ${fedaTransactionId}:`, err);
+      });
+>>>>>>> Stashed changes
     }
   }
 
@@ -723,11 +779,12 @@ router.get("/invoice/:id", async (req, res) => {
  *       400:
  *         description: Facture invalide ou expirée
  */
-router.post("/decode-invoice", async (req, res) => {
+router.post("/decode-invoice", (req, res) => {
   const { request } = req.body;
   if (!request) {
     return res.status(400).json({ error: 'Payment request is required.' });
   }
+<<<<<<< Updated upstream
   try {
     const decoded = await decodePaymentRequest({ lnd: req.lnd, request });
     res.status(200).json({ description: decoded.description, tokens: decoded.tokens, expires_at: decoded.expires_at });
@@ -735,6 +792,15 @@ router.post("/decode-invoice", async (req, res) => {
     console.error('Failed to decode payment request:', error);
     res.status(400).json({ error: 'Cette facture est invalide ou a expiré.' });
   }
+=======
+  // Utilise le client gRPC injecté pour décoder la facture
+  req.adminClients.lightning.decodePayReq({ pay_req: request }, (err, response) => {
+    if (err) {
+      return res.status(400).json({ error: "Cette facture est invalide ou a expiré.", details: err.details });
+    }
+    res.status(200).json(response);
+  });
+>>>>>>> Stashed changes
 });
 
 module.exports = router;

@@ -5091,6 +5091,18 @@ message ChannelUpdate {
     network in a forwards compatible manner.
     */
     bytes extra_opaque_data = 12;
+
+    enum Action {
+        // The channel is active and we are able to route through it.
+        ENABLE = 0;
+
+        // The channel is disabled and we are not able to route through it.
+        DISABLE = 1;
+
+        // The channel is in auto mode, and we will let the channel scorer
+        // decide whether to enable or disable it.
+        AUTO = 2;
+    }
 }
 
 message MacaroonId {
@@ -5339,4 +5351,72 @@ message InterceptFeedback {
     binary serialized gRPC message in the protobuf format.
     */
     bytes replacement_serialized = 3;
+}
+
+// Définitions manquantes à ajouter à la fin de lightning.proto
+
+message HtlcAttemptInfo {
+    // The unique ID of the htlc.
+    uint64 attempt_id = 1;
+
+    // The session key of the user that initiated the htlc.
+    bytes session_key = 2;
+
+    // The route that was used for this htlc.
+    Route route = 3;
+
+    // The time at which the htlc was dispatched.
+    int64 attempt_time_ns = 4;
+
+    // The time at which the htlc was settled or failed.
+    int64 resolve_time_ns = 5;
+}
+
+message ForwardEvent {
+    // Info contains details about the htlc that was forwarded.
+    HtlcAttemptInfo info = 1;
+}
+
+message ForwardFailEvent {}
+
+message SettleEvent {}
+
+enum FailureDetail {
+    UNKNOWN = 0;
+    NO_DETAIL = 1;
+    ONION_DECODE = 2;
+    LINK_NOT_ELIGIBLE = 3;
+    ON_CHAIN_TIMEOUT = 4;
+    HTLC_EXCEEDS_MAX = 5;
+    INSUFFICIENT_BALANCE = 6;
+    INCOMPLETE_FORWARD = 7;
+    HTLC_ADD_FAILED = 8;
+    FORWARDS_DISABLED = 9;
+    INVOICE_CANCELED = 10;
+    INVOICE_UNDERPAID = 11;
+    INVOICE_EXPIRY_TOO_SOON = 12;
+    INVOICE_NOT_OPEN = 13;
+    MPP_INVOICE_TIMEOUT = 14;
+    ADDRESS_MISMATCH = 15;
+    SET_TOTAL_MISMATCH = 16;
+    SET_TOTAL_TOO_LOW = 17;
+    SET_OVERPAID = 18;
+    UNKNOWN_INVOICE = 19;
+    INVALID_KEYSEND = 20;
+    MPP_IN_PROGRESS = 21;
+    CIRCULAR_ROUTE = 22;
+}
+
+message LinkFailEvent {
+    // Info contains details about the htlc that failed.
+    HtlcAttemptInfo info = 1;
+
+    // The wire failure code that the link failed with.
+    Failure.FailureCode wire_failure = 2;
+
+    // The reason that the link failed.
+    FailureDetail failure_detail = 3;
+
+    // A string representation of the link failure.
+    string failure_string = 4;
 }

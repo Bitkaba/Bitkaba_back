@@ -27,9 +27,11 @@ Edit the .env file: This is the most important step. Open the .env file and repl
 
 LND_GRPC_HOST: The IP address or hostname and gRPC port of your LND node (e.g., localhost:10009 or 192.168.1.100:10009).
 
-LND_MACAROON_PATH: The absolute file path to your admin.macaroon.
+LND_MACAROON: The base64-encoded content of your admin.macaroon file. You can get this by running `base64 -w 0 admin.macaroon` on Linux or `base64 -i admin.macaroon` on macOS.
 
-LND_TLS_CERT_PATH: The absolute file path to your tls.cert.
+LND_MACAROON2: The base64-encoded content of a second, more restricted macaroon (e.g., `readonly.macaroon` or a custom-baked one) for client-side operations.
+
+Note: This server uses the system's SSL trust store to connect to LND, so a `LND_TLS_CERT_PATH` is not needed if your node uses a standard certificate.
 
 Security Note: The .env file contains sensitive credentials. It should never be committed to a public repository. The provided .gitignore file will prevent this.
 
@@ -46,19 +48,16 @@ If the connection to your LND node is successful, you will see a confirmation me
 
 API Endpoints
 Once the server is running, you can interact with it using a tool like curl or Postman, or by building a frontend application that communicates with these endpoints.
+See the console output on startup for a list of available endpoints or visit the Swagger documentation.
 
-GET /api/getinfo: Retrieves general information about your node.
+**Admin Endpoints (prefix: `/api/admin`)**
+- `GET /getinfo`: Retrieves general information about your node.
+- `GET /invoices`: Lists all invoices.
+- `POST /holdinvoice`: Creates a new hold invoice.
 
-GET /api/balance: Gets your node's on-chain and channel balances.
+**Client Endpoints (prefix: `/api/client`)**
+- `GET /getinfo`, `GET /balance`, `POST /pay`
 
-POST /api/invoice: Creates a new invoice.
-
-Body: { "value": <sats>, "memo": "<description>" }
-
-GET /api/invoices: Lists all invoices.
-
-GET /api/payments: Lists all outgoing payments.
-
-POST /api/pay: Pays an invoice.
-
-Body: { "payment_request": "<lnbc...>" }
+**Gateway Endpoints (prefix: `/api`)**
+- `POST /create-fiat-payment`: Creates a Fiat-to-Lightning payment link.
+- `POST /decode-invoice`: Decodes a BOLT11 payment request.
