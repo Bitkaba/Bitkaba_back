@@ -85,6 +85,22 @@ router.get("/getinfo", (req, res) => {
   });
 });
 
+router.get("/invoices", (req, res) => {
+  let client = new lnrpc.Lightning(process.env.LND_GRPC_HOST, credentials);
+  client.listInvoices({}, (err, response) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(response);
+  });
+});
+
+router.get("/invoice/:id", (req, res) => {
+  let client = new lnrpc.Lightning(process.env.LND_GRPC_HOST, credentials);
+  client.lookupInvoice({ r_hash: req.params.id }, (err, response) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(response);
+  });
+});
+
 //Route pour faire un settle invoice
 router.post("/settleinvoice", async (req, res) => {
   try {
