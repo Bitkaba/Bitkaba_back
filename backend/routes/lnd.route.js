@@ -93,6 +93,19 @@ router.get("/invoices", (req, res) => {
   });
 });
 
+router.post("/invoice", (req, res) => {
+  const { amount, description } = req.body;
+  const request = {
+    memo: description || "Invoice",
+    value: amount || 1000,
+  };
+  let client = new lnrpc.Lightning(process.env.LND_GRPC_HOST, credentials);
+  client.addInvoice(request, (err, response) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(response);
+  });
+});
+
 router.get("/invoice/:id", (req, res) => {
   let client = new lnrpc.Lightning(process.env.LND_GRPC_HOST, credentials);
   client.lookupInvoice({ r_hash: req.params.id }, (err, response) => {
@@ -164,6 +177,26 @@ router.post("/cancel-invoice", async (req, res) => {
     res
       .status(500)
       .json({ error: "Failed to cancel invoice.", details: error });
+  }
+});
+
+router.post("/decode-invoice", async (req, res) => {
+  const { request } = req.body;
+  if (!request) {
+    return res.status(400).json({ error: "Payment request is required." });
+  }
+  try {
+    let client = new lnrpc.Lightning(process.env.LND_GRPC_HOST, credentials);
+
+    const decoded = await client.decodePayReq({ pay_req: request });
+    res.status(200).json({
+      description: decoded.description,
+      tokens: decoded.tokens,
+      expires_at: decoded.expires_at,
+    });
+  } catch (error) {
+    console.error("Failed to decode payment request:", error);
+    res.status(400).json({ error: "Cette facture est invalide ou a expiré." });
   }
 });
 

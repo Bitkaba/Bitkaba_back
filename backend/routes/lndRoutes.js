@@ -308,46 +308,4 @@ router.post("/fedapay-callback", async (req, res) => {
   res.status(200).send("OK");
 });
 
-/**
- * @swagger
- * /api/decode-invoice:
- *   post:
- *     summary: Décode une facture Lightning (payment request)
- *     tags: [Lightning]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - request
- *             properties:
- *               request:
- *                 type: string
- *                 description: La chaîne de la facture BOLT11 (lnbc...)
- *     responses:
- *       200:
- *         description: Détails de la facture décodée
- *       400:
- *         description: Facture invalide ou expirée
- */
-router.post("/decode-invoice", async (req, res) => {
-  const { request } = req.body;
-  if (!request) {
-    return res.status(400).json({ error: "Payment request is required." });
-  }
-  try {
-    const decoded = await decodePaymentRequest({ lnd: req.lnd, request });
-    res.status(200).json({
-      description: decoded.description,
-      tokens: decoded.tokens,
-      expires_at: decoded.expires_at,
-    });
-  } catch (error) {
-    console.error("Failed to decode payment request:", error);
-    res.status(400).json({ error: "Cette facture est invalide ou a expiré." });
-  }
-});
-
 module.exports = router;

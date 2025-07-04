@@ -70,7 +70,7 @@ router.post("/client/pay", async (req, res) => {
       return res.status(400).json({ error: "Payment request is required." });
     }
 
-    let client = new lnrpc.Lightning(process.env.LND_GRPC_HOST, credentials);
+    let client = new lnrpc.Lightning(process.env.LND_GRPC_HOST2, credentials);
 
     const request = {
       payment_request: payment_request,
@@ -85,6 +85,19 @@ router.post("/client/pay", async (req, res) => {
   } catch (error) {
     console.log(error);
   }
+});
+
+router.post("/client/invoice", (req, res) => {
+  const { amount, description } = req.body;
+  const request = {
+    memo: description || "Invoice",
+    value: amount || 1000,
+  };
+  let client = new lnrpc.Lightning(process.env.LND_GRPC_HOST2, credentials);
+  client.addInvoice(request, (err, response) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(response);
+  });
 });
 
 module.exports = router;
